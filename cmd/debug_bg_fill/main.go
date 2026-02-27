@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/binary"
 	"fmt"
-	"os"
 
 	"github.com/shakinm/xlsReader/cfb"
 )
@@ -22,28 +21,37 @@ func readRecordHeader(data []byte, offset uint32) (recVer uint16, recType uint16
 }
 
 func main() {
-	f, err := os.Open("testfie/test.ppt")
+	c, err := cfb.OpenFile("testfie/test.ppt")
 	if err != nil {
 		panic(err)
 	}
-	defer f.Close()
-
-	c, err := cfb.OpenReader(f)
-	if err != nil {
-		panic(err)
-	}
+	defer c.CloseFile()
 
 	// Find PowerPoint Document stream
-	var pptDoc []byte
-	for _, entry := range c.GetEntries() {
+	var pptDocEntry *cfb.Directory
+	var rootEntry *cfb.Directory
+	for _, entry := range c.GetDirs() {
 		if entry.Name() == "PowerPoint Document" {
-			pptDoc = entry.Data()
-			break
+			pptDocEntry = entry
+		}
+		if entry.Name() == "Root Entry" {
+			rootEntry = entry
 		}
 	}
-	if pptDoc == nil {
+	if pptDocEntry == nil {
 		fmt.Println("PowerPoint Document stream not found")
 		return
+	}
+
+	// Read the stream data
+	reader, err := c.OpenObject(pptDocEntry, rootEntry)
+	if err != nil {
+		panic(err)
+	}
+	pptDocSize := binary.LittleEndian.Uint32(pptDocEntry.StreamSize[:])
+	pptDoc := make([]byte, pptDocSize)
+	if _, err := reader.Read(pptDoc); err != nil {
+		panic(err)
 	}
 
 	fmt.Printf("PPT Document size: %d bytes\n", len(pptDoc))

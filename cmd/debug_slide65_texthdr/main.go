@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"example.com/officeconv/cfb"
+	"github.com/shakinm/xlsReader/cfb"
 )
 
 const recordHeaderSize = 8

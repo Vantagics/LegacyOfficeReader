@@ -80,7 +80,7 @@ func main() {
 					}
 
 					isLightFill := fillColor != "" && (fillColor == "FFFFFF" || fillColor == "E9EBF5" || fillColor == "CFD5EA" || fillColor == "E7E6E6")
-					isDarkFill := fillColor != "" && !isLightFill && fillColor != ""
+					isDarkFill := fillColor != "" && !isLightFill
 
 					if hasWhiteText && isLightFill {
 						whiteOnLight++
