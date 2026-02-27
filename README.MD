@@ -91,6 +91,36 @@ func main() {
     for i, img := range images {
         fmt.Printf("Image %d: format=%s, size=%d bytes\n", i, img.Format, len(img.Data))
     }
+
+    // Get formatted content (paragraphs, styles, etc.)
+    formatted := document.GetFormattedContent()
+    if formatted != nil {
+        for i, para := range formatted.Paragraphs {
+            fmt.Printf("Paragraph %d: %s\n", i, para.Text)
+            // Access character formatting
+            for _, run := range para.Runs {
+                if run.Bold {
+                    fmt.Printf("  Bold text: %s\n", run.Text)
+                }
+            }
+        }
+
+        // Get headers and footers
+        for _, header := range formatted.Headers {
+            fmt.Printf("Header: %s\n", header.Text)
+        }
+        for _, footer := range formatted.Footers {
+            fmt.Printf("Footer: %s\n", footer.Text)
+        }
+    }
+
+    // Get fonts used in document
+    fonts := document.GetFonts()
+    fmt.Printf("Fonts: %v\n", fonts)
+
+    // Get styles
+    styles := document.GetStyles()
+    fmt.Printf("Styles: %v\n", styles)
 }
 ```
 
@@ -111,10 +141,45 @@ func main() {
         log.Fatal(err)
     }
 
-    // Get slide text
-    for i, slide := range presentation.GetSlides() {
-        fmt.Printf("Slide %d: %s\n", i+1, slide.GetText())
+    // Get number of slides
+    fmt.Printf("Total slides: %d\n", presentation.GetNumberSlides())
+
+    // Get slide dimensions (in EMU units)
+    width, height := presentation.GetSlideSize()
+    fmt.Printf("Slide size: %d x %d EMU\n", width, height)
+
+    // Iterate through slides
+    for i := 0; i < presentation.GetNumberSlides(); i++ {
+        slide, err := presentation.GetSlide(i)
+        if err != nil {
+            log.Fatal(err)
+        }
+
+        fmt.Printf("\n--- Slide %d ---\n", i+1)
+
+        // Get all text blocks
+        texts := slide.GetTexts()
+        for j, text := range texts {
+            fmt.Printf("Text %d: %s\n", j, text)
+        }
+
+        // Get shapes with formatting info
+        shapes := slide.GetShapes()
+        for j, shape := range shapes {
+            fmt.Printf("Shape %d: type=%d, left=%d, top=%d, width=%d, height=%d\n",
+                j, shape.ShapeType, shape.Left, shape.Top, shape.Width, shape.Height)
+        }
     }
+
+    // Get all images from presentation
+    images := presentation.GetImages()
+    for i, img := range images {
+        fmt.Printf("Image %d: format=%s, size=%d bytes\n", i, img.Format, len(img.Data))
+    }
+
+    // Get fonts used in presentation
+    fonts := presentation.GetFonts()
+    fmt.Printf("Fonts: %v\n", fonts)
 }
 ```
 
@@ -284,6 +349,123 @@ func main() {
             }
         }
     }
+}
+```
+
+### 读取 DOC 文件
+
+```go
+package main
+
+import (
+    "fmt"
+    "github.com/shakinm/xlsReader/doc"
+    "log"
+)
+
+func main() {
+    document, err := doc.OpenFile("document.doc")
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    // 获取纯文本内容
+    fmt.Println(document.GetText())
+
+    // 获取图片
+    images := document.GetImages()
+    for i, img := range images {
+        fmt.Printf("图片 %d: 格式=%s, 大小=%d 字节\n", i, img.Format, len(img.Data))
+    }
+
+    // 获取格式化内容（段落、样式等）
+    formatted := document.GetFormattedContent()
+    if formatted != nil {
+        for i, para := range formatted.Paragraphs {
+            fmt.Printf("段落 %d: %s\n", i, para.Text)
+            // 访问字符格式
+            for _, run := range para.Runs {
+                if run.Bold {
+                    fmt.Printf("  粗体文本: %s\n", run.Text)
+                }
+            }
+        }
+
+        // 获取页眉页脚
+        for _, header := range formatted.Headers {
+            fmt.Printf("页眉: %s\n", header.Text)
+        }
+        for _, footer := range formatted.Footers {
+            fmt.Printf("页脚: %s\n", footer.Text)
+        }
+    }
+
+    // 获取文档中使用的字体
+    fonts := document.GetFonts()
+    fmt.Printf("字体: %v\n", fonts)
+
+    // 获取样式
+    styles := document.GetStyles()
+    fmt.Printf("样式: %v\n", styles)
+}
+```
+
+### 读取 PPT 文件
+
+```go
+package main
+
+import (
+    "fmt"
+    "github.com/shakinm/xlsReader/ppt"
+    "log"
+)
+
+func main() {
+    presentation, err := ppt.OpenFile("presentation.ppt")
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    // 获取幻灯片数量
+    fmt.Printf("幻灯片总数: %d\n", presentation.GetNumberSlides())
+
+    // 获取幻灯片尺寸（EMU单位）
+    width, height := presentation.GetSlideSize()
+    fmt.Printf("幻灯片尺寸: %d x %d EMU\n", width, height)
+
+    // 遍历幻灯片
+    for i := 0; i < presentation.GetNumberSlides(); i++ {
+        slide, err := presentation.GetSlide(i)
+        if err != nil {
+            log.Fatal(err)
+        }
+
+        fmt.Printf("\n--- 幻灯片 %d ---\n", i+1)
+
+        // 获取所有文本块
+        texts := slide.GetTexts()
+        for j, text := range texts {
+            fmt.Printf("文本 %d: %s\n", j, text)
+        }
+
+        // 获取形状及其格式信息
+        shapes := slide.GetShapes()
+        for j, shape := range shapes {
+            fmt.Printf("形状 %d: 类型=%d, 左=%d, 上=%d, 宽=%d, 高=%d\n",
+                j, shape.ShapeType, shape.Left, shape.Top, shape.Width, shape.Height)
+        }
+    }
+
+    // 获取演示文稿中的所有图片
+    images := presentation.GetImages()
+    for i, img := range images {
+        fmt.Printf("图片 %d: 格式=%s, 大小=%d 字节\n", i, img.Format, len(img.Data))
+    }
+
+    // 获取演示文稿中使用的字体
+    fonts := presentation.GetFonts()
+    fmt.Printf("字体: %v\n", fonts)
 }
 ```
 
